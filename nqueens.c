@@ -11,11 +11,13 @@
 #define BOARD_SIZE 4	
 #endif 
 
+
+int thread_count = 0;
+
 // 동시 실행할 스레드 개수 관련 명령행
 void validation_opt(int argc, char *argv[])
 {
     int option;
-	int thread_count = 0;
 
     while ((option = getopt(argc, argv, "c:")) != -1){
         switch (option)
@@ -212,6 +214,9 @@ int find_n_queens (int N)
 
 int main (int argc, char *argv[]) {
 	validation_opt(argc, argv); // 스레드 개수 관련 명령행 함수 호출
+
+	pthread_t prod[thread_count] ;
+	pthread_t cons[thread_count] ;
 
 	find_n_queens(4) ;
 	return EXIT_FAILURE ;
