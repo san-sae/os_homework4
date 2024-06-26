@@ -11,14 +11,13 @@ typedef struct {
 	pthread_cond_t queue_cv;
 	pthread_cond_t dequeue_cv;
 	pthread_mutex_t lock;
-	char **elem;
+	struct stack_t **elem; // Changed to struct stack_t**
 	int capacity;
 	int num;
 	int front;
 	int rear;
 } bounded_buffer;
 
-// BOARD_SIZE를 정의하여 N값 변경 가능
 #ifndef BOARD_SIZE
 #define BOARD_SIZE 4
 #endif
@@ -33,13 +32,13 @@ void bounded_buffer_init(bounded_buffer *buf, int capacity) {
 	pthread_cond_init(&(buf->dequeue_cv), NULL);
 	pthread_mutex_init(&(buf->lock), NULL);
 	buf->capacity = capacity;
-	buf->elem = (char **)calloc(sizeof(char *), capacity);
+	buf->elem = (struct stack_t **)calloc(sizeof(struct stack_t *), capacity); // Changed type
 	buf->num = 0;
 	buf->front = 0;
 	buf->rear = 0;
 }
 
-void bounded_buffer_queue(bounded_buffer *buf, void *msg) {
+void bounded_buffer_queue(bounded_buffer *buf, struct stack_t *msg) { // Changed type of msg
 	pthread_mutex_lock(&(buf->lock));
 
 	while (!(buf->num < buf->capacity)) {
@@ -54,12 +53,12 @@ void bounded_buffer_queue(bounded_buffer *buf, void *msg) {
 	pthread_mutex_unlock(&(buf->lock));
 }
 
-void *bounded_buffer_dequeue(bounded_buffer *buf) {
-	void *r = NULL;
+struct stack_t *bounded_buffer_dequeue(bounded_buffer *buf) { // Changed return type
+	struct stack_t *r = NULL;
 
 	pthread_mutex_lock(&(buf->lock));
 
-	while (!(0 < buf->num)) {
+	while (!(buf->num > 0)) {
 		pthread_cond_wait(&(buf->dequeue_cv), &(buf->lock));
 	}
 
@@ -73,18 +72,17 @@ void *bounded_buffer_dequeue(bounded_buffer *buf) {
 	return r;
 }
 
-// 동시 실행할 스레드 개수 관련 명령행
 void validation_opt(int argc, char *argv[]) {
 	int option;
 
 	while ((option = getopt(argc, argv, "c:")) != -1) {
 		switch (option) {
-		case 'c':
-			thread_count = atoi(optarg);
-			break;
-		default:
-			fprintf(stderr, "Usage: ./%s -c <thread_count> \n", argv[0]);
-			exit(EXIT_FAILURE);
+			case 'c':
+				thread_count = atoi(optarg);
+				break;
+			default:
+				fprintf(stderr, "Usage: ./%s -c <thread_count> \n", argv[0]);
+				exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -92,11 +90,10 @@ void validation_opt(int argc, char *argv[]) {
 void signal_handler(int sig) {
 	if (sig == SIGINT) {
 		printf("Total Count : %d\n", total_count);
-		pthread_exit(NULL); // 스레드 안전하게 종료
+		exit(0);
 	}
 }
 
-// 결과는 위치번호 cell을 통해 행(P/N)과 열(P%N)로 나타냄
 int row(int cell) {
 	return cell / BOARD_SIZE;
 }
@@ -107,7 +104,7 @@ int col(int cell) {
 
 int is_feasible(struct stack_t *queens) {
 	int board[BOARD_SIZE][BOARD_SIZE];
-	int c, r;
+	int r, c;
 
 	for (r = 0; r < BOARD_SIZE; r++) {
 		for (c = 0; c < BOARD_SIZE; c++) {
@@ -134,36 +131,28 @@ int is_feasible(struct stack_t *queens) {
 			board[r][x] = 1;
 		}
 
-		y = r + 1;
-		x = c + 1;
+		y = r + 1; x = c + 1;
 		while (0 <= y && y < BOARD_SIZE && 0 <= x && x < BOARD_SIZE) {
 			board[y][x] = 1;
-			y += 1;
-			x += 1;
+			y += 1; x += 1;
 		}
 
-		y = r + 1;
-		x = c - 1;
+		y = r + 1; x = c - 1;
 		while (0 <= y && y < BOARD_SIZE && 0 <= x && x < BOARD_SIZE) {
 			board[y][x] = 1;
-			y += 1;
-			x -= 1;
+			y += 1; x -= 1;
 		}
 
-		y = r - 1;
-		x = c + 1;
+		y = r - 1; x = c + 1;
 		while (0 <= y && y < BOARD_SIZE && 0 <= x && x < BOARD_SIZE) {
 			board[y][x] = 1;
-			y -= 1;
-			x += 1;
+			y -= 1; x += 1;
 		}
 
-		y = r - 1;
-		x = c - 1;
+		y = r - 1; x = c - 1;
 		while (0 <= y && y < BOARD_SIZE && 0 <= x && x < BOARD_SIZE) {
 			board[y][x] = 1;
-			y -= 1;
-			x -= 1;
+			y -= 1; x -= 1;
 		}
 	}
 
@@ -202,8 +191,10 @@ int find_n_queens_with_prepositions(int N, struct stack_t *prep) {
 
 		if (is_feasible(queens)) {
 			if (get_size(queens) == N) {
+
 				print_placement(queens);
 				printf("\n");
+
 				int lastest_queen;
 				pop(queens, &latest_queen);
 				push(queens, latest_queen + 1);
@@ -242,4 +233,120 @@ int find_n_queens(int N) {
 		}
 
 		if (is_feasible(queens)) {
-			if (get_size
+			if (get_size(queens) == N) {
+
+				print_placement(queens);
+				printf("\n");
+
+				int lastest_queen;
+				pop(queens, &latest_queen);
+				push(queens, latest_queen + 1);
+			} else {
+				int latest_queen;
+				top(queens, &latest_queen);
+				push(queens, latest_queen + 1);
+			}
+		} else {
+			int lastest_queen;
+			pop(queens, &latest_queen);
+			push(queens, latest_queen + 1);
+		}
+	}
+
+	delete_stack(queens);
+	return total_count;
+}
+
+void *producer(void *ptr) {
+	struct stack_t *queens = create_stack(((struct stack_t *)ptr)->capacity);
+	push(queens, 0);
+	bounded_buffer_queue(buf, queens);
+
+	while (!is_empty(queens)) {
+		int latest_queen;
+		top(queens, &latest_queen);
+
+		if (latest_queen == BOARD_SIZE * BOARD_SIZE) {
+			pop(queens, &latest_queen);
+			if (!is_empty(queens)) {
+				pop(queens, &latest_queen);
+				push(queens, latest_queen + 1);
+				bounded_buffer_queue(buf, create_stack(queens->capacity));
+			} else {
+				break;
+			}
+			continue;
+		}
+
+		if (is_feasible(queens)) {
+			if (get_size(queens) == BOARD_SIZE) {
+				bounded_buffer_queue(buf, create_stack(queens->capacity));
+				pop(queens, &latest_queen);
+				push(queens, latest_queen + 1);
+			} else {
+				push(queens, latest_queen + 1);
+				bounded_buffer_queue(buf, create_stack(queens->capacity));
+			}
+		} else {
+			pop(queens, &latest_queen);
+			push(queens, latest_queen + 1);
+		}
+	}
+	delete_stack(queens);
+	return NULL;
+}
+
+void *consumer(void *ptr) {
+	while (1) {
+		struct stack_t *queens = bounded_buffer_dequeue(buf);
+		if (queens != NULL) {
+			if (is_feasible(queens) && get_size(queens) == BOARD_SIZE) {
+				pthread_mutex_lock(&print_mutex);
+				print_placement(queens);
+				printf("\n");
+				total_count++;
+				pthread_mutex_unlock(&print_mutex);
+			}
+			delete_stack(queens);
+		}
+	}
+	return NULL;
+}
+
+int main(int argc, char *argv[]) {
+	validation_opt(argc, argv); // 스레드 개수 관련 명령행 함수 호출
+
+	pthread_t prod[thread_count];
+	pthread_t cons[thread_count];
+
+	int i;
+
+	buf = malloc(sizeof(bounded_buffer));
+	if (buf == NULL) {
+		perror("Failed to allocate memory for bounded buffer");
+		exit(EXIT_FAILURE);
+	}
+	bounded_buffer_init(buf, 3);
+
+	if (pthread_mutex_init(&print_mutex, NULL) != 0) {
+		perror("Mutex initialization failed");
+		exit(EXIT_FAILURE);
+	}
+
+	signal(SIGINT, signal_handler);
+
+	for (i = 0; i < thread_count; i++) {
+		pthread_create(&(prod[i]), NULL, producer, NULL);
+		pthread_create(&(cons[i]), NULL, consumer, NULL);
+	}
+
+	for (i = 0; i < thread_count; i++) {
+		pthread_join(prod[i], NULL);
+		pthread_join(cons[i], NULL);
+	}
+
+	free(buf);
+	pthread_mutex_destroy(&print_mutex);
+
+	return EXIT_SUCCESS;
+}
