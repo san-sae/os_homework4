@@ -1,22 +1,47 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <pthread.h>
+
 #include "stack.h"
 
+// BOARD_SIZE를 정의하여 N값 변경 가능
 #ifndef BOARD_SIZE
-#define BOARD_SIZE 15	
+#define BOARD_SIZE 4	
 #endif 
 
-
-int row (int cell)
+// 동시 실행할 스레드 개수 관련 명령행
+void validation_opt(int argc, char *argv[])
 {
+    int option;
+	int thread_count = 0;
+
+    while ((option = getopt(argc, argv, "c:")) != -1){
+        switch (option)
+        {
+        case 'c':
+            thread_count = atoi(optarg);
+            break;
+        default:
+            fprintf(stderr, "Usage: ./%s -c <thread_count> \n", argv[0]);
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
+
+
+
+// 결과는 위치번호 cell을 통해 행(P/N)과 열(P%N)로 나타냄
+int row (int cell){
 	return cell / BOARD_SIZE ;
 }
 
-int col (int cell)
-{
+int col (int cell){
 	return cell % BOARD_SIZE ;
 }
+
 
 int is_feasible (struct stack_t * queens) 
 {
@@ -185,8 +210,9 @@ int find_n_queens (int N)
 	delete_stack(queens) ;
 }
 
-int main ()
-{
+int main () {
+	validation_opt(argc, argv); // 스레드 개수 관련 명령행 함수 호출
+
 	find_n_queens(4) ;
 	return EXIT_FAILURE ;
 }
