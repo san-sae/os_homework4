@@ -298,7 +298,7 @@ producer (void * ptr)
 			if (!is_empty(queens)) {
 				pop(queens, &latest_queen);
 				push(queens, latest_queen + 1);
-				bounded_buffer_queue(buf, create_stack_from(queens));
+				bounded_buffer_queue(buf, create_stack(queens));
 			} else {
 				break;
 			}
@@ -307,13 +307,13 @@ producer (void * ptr)
 
 		if (is_feasible(queens)) {
 			if (get_size(queens) == BOARD_SIZE) {
-				bounded_buffer_queue(buf, create_stack_from(queens));
+				bounded_buffer_queue(buf, create_stack(queens));
 				int latest_queen;
 				pop(queens, &latest_queen);
 				push(queens, latest_queen + 1);
 			} else {
 				push(queens, latest_queen + 1);
-				bounded_buffer_queue(buf, create_stack_from(queens));
+				bounded_buffer_queue(buf, create_stack(queens));
 			}
 		} else {
 			int latest_queen;
