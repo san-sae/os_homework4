@@ -368,5 +368,7 @@ int main (int argc, char *argv[]) {
 		pthread_join(cons[i], 0x0) ;
 	}
 
+	free(buf);
+	
 	return EXIT_FAILURE ;
 }
