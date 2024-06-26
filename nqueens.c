@@ -285,7 +285,7 @@ int find_n_queens (int N)
 void * 
 producer (void * ptr) 
 {
-	struct stack_t *queens = create_stack(BOARD_SIZE);
+	struct stack_t *queens = create_stack(((struct stack_t *)ptr)->capacity);
 	push(queens, 0);
 	bounded_buffer_queue(buf, queens);
 
