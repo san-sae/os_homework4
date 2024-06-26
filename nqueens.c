@@ -210,7 +210,7 @@ int find_n_queens (int N)
 	delete_stack(queens) ;
 }
 
-int main () {
+int main (int argc, char *argv[]) {
 	validation_opt(argc, argv); // 스레드 개수 관련 명령행 함수 호출
 
 	find_n_queens(4) ;
