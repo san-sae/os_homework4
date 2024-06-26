@@ -39,7 +39,7 @@ void bounded_buffer_init (bounded_buffer * buf, int capacity) {
 	buf->rear = 0 ;
 }
 
-void bounded_buffer_queue (bounded_buffer * buf, char * msg) {
+void bounded_buffer_queue (bounded_buffer * buf, void * msg) {
 	pthread_mutex_lock(&(buf->lock)) ;
 		
 	while (!(buf->num < buf->capacity)) {
@@ -54,8 +54,8 @@ void bounded_buffer_queue (bounded_buffer * buf, char * msg) {
 	pthread_mutex_unlock(&(buf->lock)) ;
 }
 
-char * bounded_buffer_dequeue (bounded_buffer * buf) {
-	char * r = 0x0 ;
+void * bounded_buffer_dequeue (bounded_buffer * buf) {
+	void * r = NULL;
 
 	pthread_mutex_lock(&(buf->lock)) ;
 
