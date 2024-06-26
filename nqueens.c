@@ -355,7 +355,7 @@ int main (int argc, char *argv[]) {
 	buf = malloc(sizeof(bounded_buffer)) ;
 	bounded_buffer_init(buf, 3) ;
 
-	signal(SIGINT, singal_handler);
+	signal(SIGINT, signal_handler);
 
 
 	for (i = 0 ; i <  thread_count; i++) {
