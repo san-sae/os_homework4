@@ -54,8 +54,8 @@ void bounded_buffer_queue (bounded_buffer * buf, char * msg) {
 	pthread_mutex_unlock(&(buf->lock)) ;
 }
 
-struct stack_t * bounded_buffer_dequeue (bounded_buffer * buf) {
-	struct stack_t * r = NULL;
+char * bounded_buffer_dequeue (bounded_buffer * buf) {
+	char * r = 0x0 ;
 
 	pthread_mutex_lock(&(buf->lock)) ;
 
